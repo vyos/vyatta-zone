@@ -1,3 +1,10 @@
+vyatta-zone (0.2) unstable; urgency=low
+
+  * remove changelog from .gitignore
+  * fix changelog syntax
+
+ -- Mohit Mehta <mohit@vyatta.com>  Thu, 07 Oct 2010 19:04:40 -0700
+
 vyatta-zone (0.1) unstable; urgency=low
 
   * Initial Release.
