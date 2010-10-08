@@ -1,3 +1,9 @@
+vyatta-zone (0.3) unstable; urgency=low
+
+  * no directory for op-mode templates so remove install hook for it
+
+ -- Mohit Mehta <mohit@vyatta.com>  Fri, 08 Oct 2010 14:19:31 -0700
+
 vyatta-zone (0.2) unstable; urgency=low
 
   * remove changelog from .gitignore
