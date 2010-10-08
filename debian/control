@@ -1,0 +1,20 @@
+Source: vyatta-zone
+Section: contrib/net
+Priority: extra
+Maintainer: Vyatta Package Maintainers <maintainers@vyatta.com>
+Build-Depends: debhelper (>= 5), 
+ autotools-dev, 
+Standards-Version: 3.7.2
+
+Package: vyatta-zone
+Architecture: all
+Depends:  perl (>= 5.8.8),
+ vyatta-bash | bash (>= 3.1),
+ vyatta-cfg,
+ vyatta-cfg-firewall,
+ vyatta-idp-snort
+Replaces: vyatta-cfg,
+ vyatta-cfg-system
+Description: The vyatta-zone package
+ This package has the vyatta zone-policy programs, and
+ configuration/operational templates and scripts.

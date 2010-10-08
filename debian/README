@@ -1,0 +1,7 @@
+The Debian Package vyatta-zone
+------------------------------
+
+This package contains the vyatta zone-policy project developed by vyatta. This 
+package includes the programs, plus cli operational and commands.
+
+ -- Mohit Mehta <mohit@vyatta.com>  Thu, 07 Oct 2010
