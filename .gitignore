@@ -19,6 +19,7 @@ libtool
 /debian/files
 /debian/*.log
 /debian/vyatta-zone
+/debian/vyatta-zone.substvars
 /INSTALL
 /Makefile.in
 /Makefile
