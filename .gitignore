@@ -17,7 +17,7 @@ libtool
 /config.sub
 /configure
 /debian/files
-/debian/*log
+/debian/*.log
 /debian/vyatta-zone
 /INSTALL
 /Makefile.in
