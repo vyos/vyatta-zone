@@ -1,3 +1,9 @@
+vyatta-zone (0.4) unstable; urgency=low
+
+  * add content-inspection feature for zones
+
+ -- Mohit Mehta <mohit@vyatta.com>  Tue, 12 Oct 2010 17:44:17 -0700
+
 vyatta-zone (0.3) unstable; urgency=low
 
   * no directory for op-mode templates so remove install hook for it
