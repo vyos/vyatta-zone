@@ -1,0 +1,46 @@
+help: Option to enable IPv6 content-inspection
+
+# check if traffic-filter is set
+commit:expression:
+exec "
+if cli-shell-api existsEffective                        \
+content-inspection traffic-filter ipv6-preset; then     \
+        exit 0;                                         \
+fi;                                                     \
+if cli-shell-api existsEffective                        \
+content-inspection traffic-filter ipv6-custom; then     \
+        exit 0;                                         \
+fi;                                                     \
+echo IPv6 content-inspection traffic-filter not set;    \
+exit 1"
+
+# make sure inspect-all is not enabled
+commit:expression:
+exec "
+if ! cli-shell-api existsEffective                              \
+content-inspection inspect-all ipv6-enable; then                \
+        exit 0;                                                 \
+fi;                                                             \
+echo IPv6 content-inspection enabled for all traffic. Not       \
+allowed to configure inspection on a per-zone basis.;           \
+exit 1"
+
+create:
+	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
+	  --action=add-fromzone-ips			\
+	  --zone-name="$VAR(../../../@)"		\
+	  --from-zone="$VAR(../../@)"			\
+	  --ruleset-type=ipv6-name			\
+	  --ruleset-name=VYATTA_SNORT_all_HOOK; then
+	  exit 1
+	fi
+
+delete:
+	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
+	  --action=delete-fromzone-ips			\
+	  --zone-name="$VAR(../../../@)"		\
+	  --from-zone="$VAR(../../@)"			\
+	  --ruleset-type=ipv6-name			\
+	  --ruleset-name=VYATTA_SNORT_all_HOOK; then
+	  exit 1
+	fi

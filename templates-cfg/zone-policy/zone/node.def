@@ -10,15 +10,31 @@ syntax:expression: pattern $VAR(@) "^[^-]" ; "Zone name cannot start with \"-\""
 syntax:expression: pattern $VAR(@) "^[^;]*$" ; "Zone name cannot contain ';'"
 
 create: 
-	if ! /opt/vyatta/sbin/vyatta-zone.pl 	\
-          --action=add-zone                 	\
-          --zone-name="$VAR(@)"; then
-          exit 1
-        fi
+	# fw zone actions
+	if ! /opt/vyatta/sbin/vyatta-zone.pl		\
+	  --action=add-zone				\
+	  --zone-name="$VAR(@)"; then
+	  exit 1
+	fi
+
+	# ips zone actions
+	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
+	  --action=add-zone				\
+	  --zone-name="$VAR(@)"; then
+	  exit 1
+	fi
 
 delete: 
-	if ! /opt/vyatta/sbin/vyatta-zone.pl 	\
-          --action=delete-zone                 	\
-          --zone-name="$VAR(@)"; then
-          exit 1
-        fi
+	# fw zone actions
+	if ! /opt/vyatta/sbin/vyatta-zone.pl		\
+	  --action=delete-zone				\
+	  --zone-name="$VAR(@)"; then
+	  exit 1
+	fi
+
+	# ips zone actions
+	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
+	  --action=delete-zone				\
+	  --zone-name="$VAR(@)"; then
+	  exit 1
+	fi

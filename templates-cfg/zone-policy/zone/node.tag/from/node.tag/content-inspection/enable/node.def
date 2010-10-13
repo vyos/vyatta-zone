@@ -1,0 +1,46 @@
+help: Option to enable IPv4 content-inspection
+
+# check if traffic-filter is set
+commit:expression:
+exec "
+if cli-shell-api existsEffective                        \
+content-inspection traffic-filter preset; then          \
+        exit 0;                                         \
+fi;                                                     \
+if cli-shell-api existsEffective                        \
+content-inspection traffic-filter custom; then          \
+        exit 0;                                         \
+fi;                                                     \
+echo IPv4 content-inspection traffic-filter not set;    \
+exit 1"
+
+# make sure inspect-all is not enabled
+commit:expression:
+exec "
+if ! cli-shell-api existsEffective                              \
+content-inspection inspect-all enable; then                     \
+        exit 0;                                                 \
+fi;                                                             \
+echo IPv4 content-inspection enabled for all traffic. Not       \
+allowed to configure inspection on a per-zone basis.;           \
+exit 1"
+
+create:
+	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
+	  --action=add-fromzone-ips			\
+	  --zone-name="$VAR(../../../@)"		\
+	  --from-zone="$VAR(../../@)"			\
+	  --ruleset-type=name				\
+	  --ruleset-name=VYATTA_SNORT_all_HOOK; then
+	  exit 1
+	fi
+
+delete:
+	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
+	  --action=delete-fromzone-ips			\
+	  --zone-name="$VAR(../../../@)"		\
+	  --from-zone="$VAR(../../@)"			\
+	  --ruleset-type=name				\
+	  --ruleset-name=VYATTA_SNORT_all_HOOK; then
+	  exit 1
+	fi

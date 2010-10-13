@@ -1,6 +1,11 @@
 priority: 250 # after zone-policy/zone/node.tag/from/
+
 help: Configure zone-policy
-begin: 
-if ! /opt/vyatta/sbin/vyatta-zone.pl --action=validity-checks --zone-name=none --silent-validate=false; then
-   exit 1
+
+begin:
+if ! /opt/vyatta/sbin/vyatta-zone.pl	\
+  --action=validity-checks		\
+  --zone-name=none			\
+  --silent-validate=false; then
+  exit 1
 fi

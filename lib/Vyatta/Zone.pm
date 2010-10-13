@@ -34,19 +34,31 @@ my $debug="false";
 my $syslog="false";
 my $logger = 'sudo logger -t zone.pm -p local0.warn --';
 
+my %script_to_feature_hash = (
+        'vyatta-zone.pl'        => 'ZONE-FW',
+        'vyatta-zone-ips.pl'    => 'ZONE-IPS');
+
 sub run_cmd {
     my $cmd = shift;
     my $error = system("$cmd");
 
     if ($syslog eq "true") {
         my $func = (caller(1))[3];
-        system("$logger [$func] [$cmd] = [$error]");
+        my $feature = zone_feature((caller(1))[1]);
+        system("$logger [$feature] [$func] [$cmd] = [$error]");
     }
     if ($debug eq "true") {
         my $func = (caller(1))[3];
-        print "[$func] [$cmd] = [$error]\n";
+        my $feature = zone_feature((caller(1))[1]);
+        print "[$feature] [$func] [$cmd] = [$error]\n";
     }
     return $error;
+}
+
+sub zone_feature {
+  my ($script) = @_;
+  $script =~ s/\/opt\/vyatta\/sbin\///;
+  return $script_to_feature_hash{$script};
 }
 
 sub is_fwruleset_active {
@@ -86,10 +98,23 @@ sub is_local_zone {
     return $config->$value_func("zone-policy zone $zone_name local-zone");
 }
 
+sub is_ips_enabled {
+    my ($value_func, $zone_name, $from_zone, $ips_type) = @_;
+    $ips_type =~ s/name/enable/;
+    my $config = new Vyatta::Config;
+    return $config->$value_func("zone-policy zone $zone_name from $from_zone
+	content-inspection $ips_type")
+}
+
 sub get_zone_default_policy {
     my ($value_func, $zone_name) = @_;
     my $config = new Vyatta::Config;
     return $config->$value_func("zone-policy zone $zone_name default-action");
+}
+
+sub get_ips_zone_default_policy {
+    my ($value_func, $zone_name) = @_;
+    return 'accept';
 }
 
 sub rule_exists {
@@ -107,7 +132,19 @@ sub rule_exists {
 
 sub get_zone_chain {
     my ($value_func, $zone, $localout) = @_;
-    my $chain = "VZONE_$zone";
+    my $chain_prefix = "VZONE_$zone"; # should be same length as ips_zone_chain
+    return get_zone_chain_name($value_func, $zone, $localout, $chain_prefix);
+}
+
+sub get_ips_zone_chain {
+    my ($value_func, $zone, $localout) = @_;
+    my $chain_prefix = "VZIPS_$zone"; # should be same length as zone_chain
+    return get_zone_chain_name($value_func, $zone, $localout, $chain_prefix);
+}
+
+sub get_zone_chain_name {
+    my ($value_func, $zone, $localout, $chain_prefix) = @_;
+    my $chain = $chain_prefix;
     if (defined(is_local_zone($value_func, $zone))) {
       # local zone
       if (defined $localout) {
