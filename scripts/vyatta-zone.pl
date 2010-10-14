@@ -27,24 +27,11 @@ use Getopt::Long;
 use POSIX;
 
 use lib "/opt/vyatta/share/perl5";
-use Vyatta::Zone;
 use Vyatta::IpTables::Mgr;
+use Vyatta::Zone qw(%cmd_hash %table_hash %policy_hash);
 
 use warnings;
 use strict;
-
-# for future ease, when we add modify, these hashes will just be extended
-# firewall mapping from config node to iptables command.
-my %cmd_hash = ( 'name'        => '/sbin/iptables',
-                 'ipv6-name'   => '/sbin/ip6tables');
-
-# firewall mapping from config node to iptables/ip6tables table
-my %table_hash = ( 'name'        => 'filter',
-                   'ipv6-name'   => 'filter');
-
-# mapping from vyatta 'default-policy' to iptables jump target
-my %policy_hash = ( 'drop'    => 'DROP',
-                    'reject'  => 'REJECT' );
 
 sub setup_default_policy {
     my ($zone_name, $default_policy, $localoutchain) = @_;
@@ -80,48 +67,6 @@ sub setup_default_policy {
 in $zone_name chain failed [$error]" if $error;
         }
       }
-    }
-    return;
-}
-
-sub create_zone_chain {
-    my ($zone_name, $localoutchain) = @_;
-    my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_zone_chain("exists", 
-			$zone_name, $localoutchain);
-    
-    # create zone chains in filter, ip6filter tables
-    foreach my $tree (keys %cmd_hash) {
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " . 
-		"-L $zone_chain >&/dev/null";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     if ($error) { 
-       # chain does not exist, go ahead create it
-       $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -N $zone_chain";
-       $error = Vyatta::Zone::run_cmd($cmd);
-       return "Error: create $zone_name chain with failed [$error]" if $error;
-     }
-    }
-    
-    return;
-}
-
-sub delete_zone_chain {
-    my ($zone_name, $localoutchain) = @_;
-    my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_zone_chain("existsOrig", 
-			$zone_name, $localoutchain);
-    # delete zone chains from filter, ip6filter tables
-    foreach my $tree (keys %cmd_hash) {
-     # flush all rules from zone chain
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -F $zone_chain";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     return "Error: flush all rules in $zone_name chain failed [$error]" if $error;
-
-     # delete zone chain
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -X $zone_chain";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     return "Error: delete $zone_name chain failed [$error]" if $error;
     }
     return;
 }
@@ -460,12 +405,13 @@ $zone_chain chain failed [$error]" if $error;
 sub add_zone {
     my $zone_name = shift;
     # perform firewall related actions for this zone
-    my $error = create_zone_chain ($zone_name);
+    my $error = Vyatta::Zone::create_zone_chain("get_zone_chain", $zone_name);
     return ($error, ) if $error;
 
     if (defined(Vyatta::Zone::is_local_zone("exists", $zone_name))) {
       # make local out chain as well
-      $error = create_zone_chain ($zone_name, "localout");
+      $error = Vyatta::Zone::create_zone_chain ("get_zone_chain",
+					$zone_name, "localout");
       return ($error, ) if $error;
 
       # allow traffic sourced from and destined to localhost
@@ -541,11 +487,12 @@ sub add_zone {
 sub delete_zone {
     my $zone_name = shift;
     # undo firewall related actions for this zone
-    my $error = delete_zone_chain ($zone_name);
+    my $error = Vyatta::Zone::delete_zone_chain("get_zone_chain", $zone_name);
     return ($error, ) if $error;
     if (defined(Vyatta::Zone::is_local_zone("existsOrig", $zone_name))) {
       # delete local out chain as well
-      $error = delete_zone_chain ($zone_name, "localout");
+      $error = Vyatta::Zone::delete_zone_chain("get_zone_chain",
+					$zone_name, "localout");
       return ($error, ) if $error;
     }
     return;    

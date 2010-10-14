@@ -30,6 +30,28 @@ use Vyatta::Interface;
 use strict;
 use warnings;
 
+use base 'Exporter';
+
+# mapping from config node to iptables command
+our %cmd_hash = ( 'name'        => '/sbin/iptables',
+                  'ipv6-name'   => '/sbin/ip6tables');
+
+# mapping from config node to iptables/ip6tables table
+our %table_hash = ( 'name'        => 'filter',
+                    'ipv6-name'   => 'filter');
+
+# mapping from zone default action to iptables jump target
+our %policy_hash = ( 'drop'    => 'DROP',
+                     'reject'  => 'REJECT',
+                     'accept'  => 'RETURN');
+
+our @EXPORT_OK = qw(%cmd_hash %table_hash %policy_hash);
+
+my %get_zone_chain_hash = (
+    get_zone_chain     => \&get_zone_chain,
+    get_ips_zone_chain => \&get_ips_zone_chain,
+);
+
 my $debug="false";
 my $syslog="false";
 my $logger = 'sudo logger -t zone.pm -p local0.warn --';
@@ -246,6 +268,48 @@ sub validity_checks {
           }
         }
       }
+    }
+    return;
+}
+
+sub create_zone_chain {
+    my ($feature_func, $zone_name, $localoutchain) = @_;
+    my ($cmd, $error);
+    my $zone_chain=$get_zone_chain_hash{$feature_func}->("exists",
+                        $zone_name, $localoutchain);
+
+    # create zone chains in filter, ip6filter tables
+    foreach my $tree (keys %cmd_hash) {
+     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
+                "-L $zone_chain >&/dev/null";
+     $error = run_cmd($cmd);
+     if ($error) {
+       # chain does not exist, go ahead create it
+       $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -N $zone_chain";
+       $error = run_cmd($cmd);
+       return "Error: create $zone_name chain with failed [$error]" if $error;
+     }
+    }
+
+    return;
+}
+
+sub delete_zone_chain {
+    my ($feature_func, $zone_name, $localoutchain) = @_;
+    my ($cmd, $error);
+    my $zone_chain=$get_zone_chain_hash{$feature_func}->("existsOrig",
+                        $zone_name, $localoutchain);
+    # delete zone chains from filter, ip6filter tables
+    foreach my $tree (keys %cmd_hash) {
+     # flush all rules from zone chain
+     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -F $zone_chain";
+     $error = run_cmd($cmd);
+     return "Error: flush all rules in $zone_name chain failed [$error]" if $error;
+
+     # delete zone chain
+     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -X $zone_chain";
+     $error = run_cmd($cmd);
+     return "Error: delete $zone_name chain failed [$error]" if $error;
     }
     return;
 }
