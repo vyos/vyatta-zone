@@ -1,3 +1,10 @@
+vyatta-zone (0.5) unstable; urgency=low
+
+  * move common hashes and create/delete zone chain functions to zone
+    library
+
+ -- Mohit Mehta <mohit@vyatta.com>  Wed, 13 Oct 2010 17:43:35 -0700
+
 vyatta-zone (0.4) unstable; urgency=low
 
   * add content-inspection feature for zones
