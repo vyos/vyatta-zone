@@ -188,38 +188,10 @@ sub delete_fromlocalzone_ruleset {
 
 sub do_ips_interface_zone {
     my ($zone_name, $interface) = @_;
-    my $zone_chain=Vyatta::Zone::get_ips_zone_chain("exists", $zone_name);
     my ($cmd, $error);
-    foreach my $tree (keys %cmd_hash) {
-
-     my $result = Vyatta::Zone::rule_exists ($cmd_hash{$tree}, 
-	$table_hash{$tree}, "$zone_chain", "RETURN", $interface);
-     if ($result < 1) {
-      # add rule to allow same zone to same zone traffic
-      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I $zone_chain " .
-	"-i $interface -j RETURN";
-      $error = Vyatta::Zone::run_cmd($cmd);
-      return "Error: call to add $interface to its zone-chain $zone_chain 
-failed [$error]" if $error;
-     }
-
-     # need to do this as an append before ACCEPT rule at the end
-     my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree}, 
-		$table_hash{$tree}, "VYATTA_POST_FW_FWD_HOOK");
-     my $insert_at_rule_num=1;
-     if ( $rule_cnt > 1 ) {
-        $insert_at_rule_num=$rule_cnt;
-     }
-     $result = Vyatta::Zone::rule_exists ($cmd_hash{$tree}, $table_hash{$tree}, 
-		"VYATTA_POST_FW_FWD_HOOK", "$zone_chain", $interface);
-     if ($result < 1) {
-      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I VYATTA_POST_FW_FWD_HOOK " . 
-	"$insert_at_rule_num -o $interface -j $zone_chain";
-      $error = Vyatta::Zone::run_cmd($cmd);
-      return "Error: call to add jump rule for outgoing interface $interface 
-to its $zone_chain chain failed [$error]" if $error;
-     }
-    }
+    $error = Vyatta::Zone::add_intf_to_zonechain('get_ips_zone_chain',
+		$zone_name, $interface, 'VYATTA_POST_FW_FWD_HOOK');
+    return "Error: $error" if $error;
     
     # get all zones in which this zone is being used as a from zone
     # then in chains for those zones, add rules for this incoming interface
@@ -258,24 +230,9 @@ to its $zone_chain chain failed [$error]" if $error;
 sub undo_ips_interface_zone {
     my ($zone_name, $interface) = @_;
     my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_ips_zone_chain("existsOrig", $zone_name);
-
-    foreach my $tree (keys %cmd_hash) {
-
-     # delete rule to allow same zone to same zone traffic
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D VYATTA_POST_FW_FWD_HOOK " .
-	"-o $interface -j $zone_chain";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     return "Error: call to delete jump rule for outgoing interface $interface 
-to $zone_chain chain failed [$error]" if $error;
-
-     # delete ruleset jump for this in interface
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D $zone_chain " .
-	"-i $interface -j RETURN";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     return "Error: call to delete interface $interface from zone-chain 
-$zone_chain with failed [$error]" if $error;
-    }
+    $error = Vyatta::Zone::delete_intf_from_zonechain('get_ips_zone_chain',
+                $zone_name, $interface, 'VYATTA_POST_FW_FWD_HOOK');
+    return "Error: $error" if $error;
 
     # delete rules for this intf where this zone is being used as a from zone
     my @all_zones = Vyatta::Zone::get_all_zones("listOrigNodes");
@@ -401,13 +358,13 @@ sub add_zone {
     # perform IPS related actions for this zone
     my $error = Vyatta::Zone::create_zone_chain("get_ips_zone_chain",
 							$zone_name);
-    return ($error, ) if $error;
+    return ("Error: $error", ) if $error;
 
     if (defined(Vyatta::Zone::is_local_zone("exists", $zone_name))) {
       # make local out chain as well
       $error = Vyatta::Zone::create_zone_chain("get_ips_zone_chain",
 					$zone_name, "localout");
-      return ($error, ) if $error;
+      return ("Error: $error", ) if $error;
 
       # allow traffic sourced from and destined to localhost
       my $cmd;
@@ -485,12 +442,12 @@ sub delete_zone {
     # undo IPS related actions for this zone
     my $error = Vyatta::Zone::delete_zone_chain("get_ips_zone_chain",
 							$zone_name);
-    return ($error, ) if $error;
+    return ("Error: $error", ) if $error;
     if (defined(Vyatta::Zone::is_local_zone("existsOrig", $zone_name))) {
       # delete local out chain as well
       $error =  Vyatta::Zone::delete_zone_chain("get_ips_zone_chain",
 					$zone_name, "localout");
-      return ($error, ) if $error;
+      return ("Error: $error", ) if $error;
     }
     return;    
 }

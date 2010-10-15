@@ -26,6 +26,7 @@ package Vyatta::Zone;
 use Vyatta::Config;
 use Vyatta::Misc;
 use Vyatta::Interface;
+use Vyatta::IpTables::Mgr;
 
 use strict;
 use warnings;
@@ -287,7 +288,7 @@ sub create_zone_chain {
        # chain does not exist, go ahead create it
        $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -N $zone_chain";
        $error = run_cmd($cmd);
-       return "Error: create $zone_name chain with failed [$error]" if $error;
+       return "create $zone_name chain with failed [$error]" if $error;
      }
     }
 
@@ -304,14 +305,79 @@ sub delete_zone_chain {
      # flush all rules from zone chain
      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -F $zone_chain";
      $error = run_cmd($cmd);
-     return "Error: flush all rules in $zone_name chain failed [$error]" if $error;
+     return "flush all rules in $zone_name chain failed [$error]" if $error;
 
      # delete zone chain
      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -X $zone_chain";
      $error = run_cmd($cmd);
-     return "Error: delete $zone_name chain failed [$error]" if $error;
+     return "delete $zone_name chain failed [$error]" if $error;
     }
     return;
+}
+
+sub add_intf_to_zonechain {
+    my ($zone_chain_func, $zone_name, $interface, $feature_chain) = @_;
+    my $zone_chain=
+	$get_zone_chain_hash{$zone_chain_func}->("exists", $zone_name);
+    my ($cmd, $error);
+    foreach my $tree (keys %cmd_hash) {
+
+     my $result = rule_exists ($cmd_hash{$tree}, $table_hash{$tree},
+                                "$zone_chain", "RETURN", $interface);
+     if ($result < 1) {
+      # add rule to allow same zone to same zone traffic
+      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I $zone_chain " .
+        "-i $interface -j RETURN";
+      $error = run_cmd($cmd);
+      return "call to add $interface to its zone-chain $zone_chain
+failed [$error]" if $error;
+     }
+
+     # add jump rule to zone chain for this interface before last rule
+     my $rule_cnt =
+	Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
+				$table_hash{$tree}, "$feature_chain");
+     my $insert_at_rule_num=1;
+     if ( $rule_cnt > 1 ) {
+        $insert_at_rule_num=$rule_cnt;
+     }
+     $result = rule_exists ($cmd_hash{$tree}, $table_hash{$tree},
+                "$feature_chain", "$zone_chain", $interface);
+     if ($result < 1) {
+      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I " .
+	"$feature_chain $insert_at_rule_num -o $interface -j $zone_chain";
+      $error = run_cmd($cmd);
+      return "call to add jump rule for outgoing interface $interface
+to its $zone_chain chain failed [$error]" if $error;
+     }
+    }
+
+    # success
+    return;
+}
+
+sub delete_intf_from_zonechain {
+    my ($zone_chain_func, $zone_name, $interface, $feature_chain) = @_;
+    my $zone_chain=
+	$get_zone_chain_hash{$zone_chain_func}->("existsOrig", $zone_name);
+    my ($cmd, $error);
+
+    foreach my $tree (keys %cmd_hash) {
+
+     # delete rule to jump to zone chain for this interface
+     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D $feature_chain " .
+        "-o $interface -j $zone_chain";
+     $error = run_cmd($cmd);
+     return "Error: call to delete jump rule for outgoing interface $interface
+to $zone_chain chain failed [$error]" if $error;
+
+     # delete rule to allow same zone to same zone traffic
+     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D $zone_chain " .
+	"-i $interface -j RETURN";
+     $error = run_cmd($cmd);
+     return "Error: call to delete interface $interface from zone-chain
+$zone_chain with failed [$error]" if $error;
+    }
 }
 
 1;
