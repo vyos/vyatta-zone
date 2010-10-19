@@ -1,3 +1,10 @@
+vyatta-zone (0.7) unstable; urgency=low
+
+  * add common functions to add/remove jump to localin and localout
+    feature chains
+
+ -- Mohit Mehta <mohit@vyatta.com>  Tue, 19 Oct 2010 15:04:47 -0700
+
 vyatta-zone (0.6) unstable; urgency=low
 
   * common functions to add/delete interface to/from v4 and v6 feature
