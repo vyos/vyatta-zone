@@ -270,27 +270,10 @@ sub undo_ips_interface_zone {
 sub do_ips_localzone {
     my ($zone_name) = @_;
     my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_ips_zone_chain("exists", $zone_name);
-    foreach my $tree (keys %cmd_hash) {
 
-     my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree}, 
-		$table_hash{$tree}, "VYATTA_POST_FW_IN_HOOK");
-     my $insert_at_rule_num=1;
-     if ( $rule_cnt > 1 ) {
-        $insert_at_rule_num=$rule_cnt;
-     }
-     my $result = Vyatta::Zone::rule_exists ($cmd_hash{$tree}, 
-		$table_hash{$tree}, "VYATTA_POST_FW_IN_HOOK", $zone_chain);
-
-     if ($result < 1) {
-      # insert rule to filter local traffic from interface per ruleset
-      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I " .
-        "VYATTA_POST_FW_IN_HOOK $insert_at_rule_num -j $zone_chain";
-      $error = Vyatta::Zone::run_cmd($cmd);
-      return "Error: call to add jump rule for local zone
-$zone_chain chain failed [$error]" if $error;
-     }
-    }
+    $error = Vyatta::Zone::add_jump_to_localin_zonechain('get_ips_zone_chain',
+                $zone_name, 'VYATTA_POST_FW_IN_HOOK');
+    return "Error: $error" if $error;
 
     # get all zones in which local zone is being used as a from zone
     # filter traffic from local zone to those zones
@@ -318,17 +301,10 @@ $zone_chain chain failed [$error]" if $error;
 sub undo_ips_localzone {
     my ($zone_name) = @_;
     my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_ips_zone_chain("existsOrig", $zone_name);
 
-    foreach my $tree (keys %cmd_hash) {
-     
-     # delete rule to filter traffic destined for system
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D " .
-        "VYATTA_POST_FW_IN_HOOK -j $zone_chain";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     return "Error: call to delete local zone
-$zone_chain chain failed [$error]" if $error;
-    }
+    $error = Vyatta::Zone::remove_jump_to_localin_zonechain('get_ips_zone_chain',
+                $zone_name, 'VYATTA_POST_FW_IN_HOOK');
+    return "Error: $error" if $error;
 
     # get all zones in which local zone is being used as a from zone
     # remove filter for traffic from local zone to those zones
@@ -515,27 +491,9 @@ sub add_fromzone_ips {
         }
       }
 
-      my $zone_chain=Vyatta::Zone::get_ips_zone_chain("exists",
-                        $from_zone, 'localout');
-      # add jump to local-zone-out chain in OUTPUT chains for [ip and ip6]tables
-      foreach my $tree (keys %cmd_hash) {
-        # if jump to localzoneout chain not inserted, then insert rule
-        my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
-                $table_hash{$tree}, "VYATTA_POST_FW_OUT_HOOK");
-        my $insert_at_rule_num=1;
-        if ( $rule_cnt > 1 ) {
-          $insert_at_rule_num=$rule_cnt;
-        }
-        my $result = Vyatta::Zone::rule_exists ($cmd_hash{$tree},
-          $table_hash{$tree}, "VYATTA_POST_FW_OUT_HOOK", $zone_chain);
-        if ($result < 1) {
-          my $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
-             "-I VYATTA_POST_FW_OUT_HOOK $insert_at_rule_num -j $zone_chain";
-          $error = Vyatta::Zone::run_cmd($cmd);
-          return "Error: call to add jump rule for local zone out
-$zone_chain chain failed [$error]" if $error;
-        }
-      }
+      $error = Vyatta::Zone::add_jump_to_localout_zonechain(
+        'get_ips_zone_chain', $from_zone, 'VYATTA_POST_FW_OUT_HOOK');
+      return "Error: $error" if $error;
 
     } # end of else
 
@@ -568,28 +526,12 @@ sub delete_fromzone_ips {
         }
       }
     
-      my $zone_chain=Vyatta::Zone::get_ips_zone_chain("existsOrig",
-                        $from_zone, 'localout');
-      # if only RETURN rule & localhost allow rule in $zone_chain in both 
-      # [ip and ip6]tables then delete jump from OUTPUT chain in both
-      foreach my $tree (keys %cmd_hash) {
-        my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
-        $table_hash{$tree}, $zone_chain);
-        if ($rule_cnt > 2) {
-         # atleast one of [ip or ip6]tables has local-zone as a from zone
-         return;
-        }
-      }
-
-      foreach my $tree (keys %cmd_hash) {
-           $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
-           "-D VYATTA_POST_FW_OUT_HOOK -j $zone_chain";
-           $error = Vyatta::Zone::run_cmd($cmd);
-           return "Error: call to delete jump rule for local zone out
-$zone_chain chain failed [$error]" if $error;
-      }
+      $error = Vyatta::Zone::remove_jump_to_localout_zonechain(
+        'get_ips_zone_chain', $from_zone, 'VYATTA_POST_FW_OUT_HOOK');
+      return "Error: $error" if $error;
 
     } # end of else
+
     return;
 }
 

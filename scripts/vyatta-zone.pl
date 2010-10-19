@@ -276,27 +276,10 @@ sub undo_firewall_interface_zone {
 sub do_firewall_localzone {
     my ($zone_name) = @_;
     my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_zone_chain("exists", $zone_name);
-    foreach my $tree (keys %cmd_hash) {
 
-     my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree}, 
-		$table_hash{$tree}, "INPUT");
-     my $insert_at_rule_num=1;
-     if ( $rule_cnt > 1 ) {
-        $insert_at_rule_num=$rule_cnt;
-     }
-     my $result = Vyatta::Zone::rule_exists ($cmd_hash{$tree}, 
-		$table_hash{$tree}, "INPUT", $zone_chain);
-
-     if ($result < 1) {
-      # insert rule to filter local traffic from interface per ruleset
-      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I INPUT " .
-        "$insert_at_rule_num -j $zone_chain";
-      $error = Vyatta::Zone::run_cmd($cmd);
-      return "Error: call to add jump rule for local zone
-$zone_chain chain failed [$error]" if $error;
-     }
-    }
+    $error = Vyatta::Zone::add_jump_to_localin_zonechain('get_zone_chain',
+                $zone_name, 'INPUT');
+    return "Error: $error" if $error;
 
     # get all zones in which local zone is being used as a from zone
     # filter traffic from local zone to those zones
@@ -324,17 +307,10 @@ $zone_chain chain failed [$error]" if $error;
 sub undo_firewall_localzone {
     my ($zone_name) = @_;
     my ($cmd, $error);
-    my $zone_chain=Vyatta::Zone::get_zone_chain("existsOrig", $zone_name);
 
-    foreach my $tree (keys %cmd_hash) {
-     
-     # delete rule to filter traffic destined for system
-     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D INPUT " .
-        "-j $zone_chain";
-     $error = Vyatta::Zone::run_cmd($cmd);
-     return "Error: call to delete local zone
-$zone_chain chain failed [$error]" if $error;
-    }
+    $error = Vyatta::Zone::remove_jump_to_localin_zonechain('get_zone_chain',
+                $zone_name, 'INPUT');
+    return "Error: $error" if $error;
 
     # get all zones in which local zone is being used as a from zone
     # remove filter for traffic from local zone to those zones
@@ -518,27 +494,9 @@ sub add_fromzone_fw {
         }
       }
 
-      my $zone_chain=Vyatta::Zone::get_zone_chain("exists",
-                        $from_zone, 'localout');
-      # add jump to local-zone-out chain in OUTPUT chains for [ip and ip6]tables
-      foreach my $tree (keys %cmd_hash) {
-        # if jump to localzoneout chain not inserted, then insert rule
-        my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
-                $table_hash{$tree}, "OUTPUT");
-        my $insert_at_rule_num=1;
-        if ( $rule_cnt > 1 ) {
-          $insert_at_rule_num=$rule_cnt;
-        }
-        my $result = Vyatta::Zone::rule_exists ($cmd_hash{$tree},
-          $table_hash{$tree}, "OUTPUT", $zone_chain);
-        if ($result < 1) {
-          my $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
-             "-I OUTPUT $insert_at_rule_num -j $zone_chain";
-          $error = Vyatta::Zone::run_cmd($cmd);
-          return "Error: call to add jump rule for local zone out
-$zone_chain chain failed [$error]" if $error;
-        }
-      }
+      $error = Vyatta::Zone::add_jump_to_localout_zonechain(
+        'get_zone_chain', $from_zone, 'OUTPUT');
+      return "Error: $error" if $error;
 
     } # end of else
 
@@ -570,29 +528,13 @@ sub delete_fromzone_fw {
           return "Error: $error" if $error;
         }
       }
-    
-      my $zone_chain=Vyatta::Zone::get_zone_chain("existsOrig",
-                        $from_zone, 'localout');
-      # if only drop rule & localhost allow rule in $zone_chain in both 
-      # [ip and ip6]tables then delete jump from OUTPUT chain in both
-      foreach my $tree (keys %cmd_hash) {
-        my $rule_cnt = Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
-        $table_hash{$tree}, $zone_chain);
-        if ($rule_cnt > 2) {
-         # atleast one of [ip or ip6]tables has local-zone as a from zone
-         return;
-        }
-      }
 
-      foreach my $tree (keys %cmd_hash) {
-           $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
-           "-D OUTPUT -j $zone_chain";
-           $error = Vyatta::Zone::run_cmd($cmd);
-           return "Error: call to delete jump rule for local zone out
-$zone_chain chain failed [$error]" if $error;
-      }
+      $error = Vyatta::Zone::remove_jump_to_localout_zonechain(
+        'get_zone_chain', $from_zone, 'OUTPUT');
+      return "Error: $error" if $error;
 
     } # end of else
+
     return;
 }
 

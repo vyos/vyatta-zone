@@ -368,16 +368,134 @@ sub delete_intf_from_zonechain {
      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D $feature_chain " .
         "-o $interface -j $zone_chain";
      $error = run_cmd($cmd);
-     return "Error: call to delete jump rule for outgoing interface $interface
+     return "call to delete jump rule for outgoing interface $interface
 to $zone_chain chain failed [$error]" if $error;
 
      # delete rule to allow same zone to same zone traffic
      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D $zone_chain " .
 	"-i $interface -j RETURN";
      $error = run_cmd($cmd);
-     return "Error: call to delete interface $interface from zone-chain
+     return "call to delete interface $interface from zone-chain
 $zone_chain with failed [$error]" if $error;
     }
+
+    # success
+    return;
+}
+
+sub add_jump_to_localin_zonechain {
+    my ($zone_chain_func, $zone_name, $feature_chain) = @_;
+    my ($cmd, $error);
+    my $zone_chain=
+        $get_zone_chain_hash{$zone_chain_func}->("exists", $zone_name);
+
+    foreach my $tree (keys %cmd_hash) {
+
+      my $rule_cnt =
+        Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
+                                $table_hash{$tree}, $feature_chain);
+      my $insert_at_rule_num=1;
+      if ( $rule_cnt > 1 ) {
+        $insert_at_rule_num=$rule_cnt;
+      }
+      my $result = rule_exists ($cmd_hash{$tree}, $table_hash{$tree},
+                                        $feature_chain, $zone_chain);
+
+      if ($result < 1) {
+        # insert rule to filter local traffic from interface per ruleset
+        $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -I " .
+                "$feature_chain $insert_at_rule_num -j $zone_chain";
+        $error = run_cmd($cmd);
+        return "call to add jump rule for local zone
+$zone_chain chain failed [$error]" if $error;
+      }
+    }
+
+    # success
+    return;
+}
+
+sub remove_jump_to_localin_zonechain {
+    my ($zone_chain_func, $zone_name, $feature_chain) = @_;
+    my ($cmd, $error);
+    my $zone_chain=
+        $get_zone_chain_hash{$zone_chain_func}->("existsOrig", $zone_name);
+
+    foreach my $tree (keys %cmd_hash) {
+
+     # delete rule to filter traffic destined for system
+     $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} -D $feature_chain " .
+        "-j $zone_chain";
+     $error = run_cmd($cmd);
+     return "call to delete local zone
+$zone_chain chain failed [$error]" if $error;
+
+    }
+
+    # success
+    return;
+}
+
+sub add_jump_to_localout_zonechain {
+    my ($zone_chain_func, $zone_name, $feature_chain) = @_;
+    my ($cmd, $error);
+
+    my $zone_chain=$get_zone_chain_hash{$zone_chain_func}->("exists",
+                                $zone_name, 'localout');
+    # add jump to local-zone-out chain
+    foreach my $tree (keys %cmd_hash) {
+      # if jump to localzoneout chain not inserted, then insert rule
+      my $rule_cnt =
+	Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
+				$table_hash{$tree}, $feature_chain);
+      my $insert_at_rule_num=1;
+      if ( $rule_cnt > 1 ) {
+        $insert_at_rule_num=$rule_cnt;
+      }
+      my $result = rule_exists ($cmd_hash{$tree}, $table_hash{$tree},
+                                        $feature_chain, $zone_chain);
+      if ($result < 1) {
+        my $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
+           "-I $feature_chain $insert_at_rule_num -j $zone_chain";
+        $error = run_cmd($cmd);
+        return "call to add jump rule for local zone out
+$zone_chain chain failed [$error]" if $error;
+      }
+    }
+
+    # success
+    return;
+}
+
+sub remove_jump_to_localout_zonechain {
+    my ($zone_chain_func, $zone_name, $feature_chain) = @_;
+    my ($cmd, $error);
+
+    my $zone_chain=
+	$get_zone_chain_hash{$zone_chain_func}->("existsOrig",
+					$zone_name, 'localout');
+
+    # if only two rules then delete jump from OUTPUT chain in both
+    foreach my $tree (keys %cmd_hash) {
+      my $rule_cnt =
+	Vyatta::IpTables::Mgr::count_iptables_rules($cmd_hash{$tree},
+					$table_hash{$tree}, $zone_chain);
+      if ($rule_cnt > 2) {
+        # atleast one of [ip or ip6]tables has local-zone as a from zone
+        return;
+      }
+    }
+
+    foreach my $tree (keys %cmd_hash) {
+      $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
+            "-D $feature_chain -j $zone_chain";
+      $error = run_cmd($cmd);
+      return "call to delete jump rule for local zone out
+$zone_chain chain failed [$error]" if $error;
+     }
+
+    # success
+    return;
 }
 
 1;
