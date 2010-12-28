@@ -1,3 +1,9 @@
+vyatta-zone (0.8) unstable; urgency=low
+
+  * new branch
+
+ -- An-Cheng Huang <ancheng@vyatta.com>  Tue, 28 Dec 2010 13:53:29 -0800
+
 vyatta-zone (0.7) unstable; urgency=low
 
   * add common functions to add/remove jump to localin and localout
