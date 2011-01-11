@@ -2,8 +2,8 @@ tag:
 type: txt
 help: Zone name
 
-syntax:expression: pattern $VAR(@) "^[[:print:]]{1,20}$" ;
-                "Zone name must be 20 characters or less"
+syntax:expression: pattern $VAR(@) "^[[:print:]]{1,18}$" ;
+                "Zone name must be 18 characters or less"
 
 syntax:expression: pattern $VAR(@) "^[^-]" ; "Zone name cannot start with \"-\""
 
