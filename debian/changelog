@@ -1,3 +1,9 @@
+vyatta-zone (0.10) unstable; urgency=low
+
+  * Bug 7154 Priority inversion error when deleting zone policy
+
+ -- Mohit Mehta <mohit@vyatta.com>  Thu, 16 Jun 2011 13:02:42 -0700
+
 vyatta-zone (0.9) unstable; urgency=low
 
   * Fix Bug 6292 iptables chain-name must be reduced to 28 characters
