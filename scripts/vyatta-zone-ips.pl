@@ -54,15 +54,17 @@ sub setup_default_policy {
       # If there's a return all rule at rule_cnt - 1 then remove that.
       # In IPS zone chain a return all target can only be for default policy
       if ($rule_cnt > 1) {
-        my $in_intf = '$6';
+        my $intf = '$6';
+        $intf = '$7' if defined $localoutchain;
         # set IPv6 params if using ip6tables
         if ($cmd_hash{$tree} =~ '6') {
-          $in_intf = '$5';
+          $intf = '$5';
+          $intf = '$6' if defined $localoutchain;
         }
         my $penultimate_rule_num=$rule_cnt-1;
         $cmd = "sudo $cmd_hash{$tree} -t $table_hash{$tree} " .
                "-L $zone_chain $penultimate_rule_num -v " .
-               "| awk {'print \$3\" \"$in_intf'}";
+               "| awk {'print \$3\" \"$intf'}";
         my $target=`$cmd`;
         chomp $target;
         if (defined $target && ($target eq 'RETURN any')) {
@@ -148,7 +150,7 @@ sub delete_from_rule {
         $ruleset_name=$ruleset;
     } else { # called from undo_ips_interface_zone()
         $ruleset_name = 'VYATTA_SNORT_all_HOOK' if defined
-                Vyatta::Zone::is_ips_enabled("exists",
+                Vyatta::Zone::is_ips_enabled("existsOrig",
                 $zone_name, $from_zone, $ruleset_type);
     }
 

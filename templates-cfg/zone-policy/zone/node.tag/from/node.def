@@ -1,5 +1,5 @@
 tag:
-priority: 245 # after firewall, content-inspection
+priority: 251 # after zone-policy
 type: txt
 help: Zone from which to filter traffic
 
@@ -9,9 +9,9 @@ allowed:
         echo -n "${zones[@]}"
 
 begin:
-if ! /opt/vyatta/sbin/vyatta-zone.pl	\
-  --action=validity-checks		\
-  --zone-name=none			\
+if ! /opt/vyatta/sbin/vyatta-zone.pl   \
+  --action=validity-checks             \
+  --zone-name=none                     \
   --silent-validate=true; then
   exit 1
 fi
@@ -35,28 +35,4 @@ create:
  if [ $found -eq 0 ]; then
    echo Undefined from zone [$VAR(@)] under zone $parent_zone
    exit 1
- else
-   # fw zone actions
-   if ! /opt/vyatta/sbin/vyatta-zone.pl            \
-     --action=add-zone                             \
-     --zone-name="$parent_zone"; then
-     exit 1
-   fi
-   if ! /opt/vyatta/sbin/vyatta-zone.pl            \
-     --action=add-zone                             \
-     --zone-name="$VAR(@)"; then
-     exit 1
-   fi
-
-   # ips zone actions
-   if ! /opt/vyatta/sbin/vyatta-zone-ips.pl        \
-     --action=add-zone                             \
-     --zone-name="$parent_zone"; then
-     exit 1
-   fi
-   if ! /opt/vyatta/sbin/vyatta-zone-ips.pl        \
-     --action=add-zone                             \
-     --zone-name="$VAR(@)"; then
-     exit 1
-   fi
  fi

@@ -1,4 +1,4 @@
-priority: 250 # after zone-policy/zone/node.tag/from/
+priority: 250 # after firewall, content-inspection
 
 help: Configure zone-policy
 

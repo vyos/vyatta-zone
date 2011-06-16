@@ -142,13 +142,25 @@ sub delete_from_rule {
     my ($zone_name, $from_zone, $interface, $ruleset_type, $ruleset, 
 	$direction, $zone_chain) = @_;
     my ($cmd, $error);
-    my $ruleset_name;
+    my ($ruleset_name, $new_ruleset_name);
 
     if (defined $ruleset) { # called from node.def
         $ruleset_name=$ruleset;
     } else { # called from undo_firewall_interface_zone()
         $ruleset_name=Vyatta::Zone::get_firewall_ruleset("returnOrigValue", 
 		$zone_name, $from_zone, $ruleset_type);
+        $new_ruleset_name=Vyatta::Zone::get_firewall_ruleset("returnValue",
+                $zone_name, $from_zone, $ruleset_type);
+
+        if (defined $ruleset_name) {
+            if (defined $new_ruleset_name) {
+                # if ruleset modified, call from node.def will take care of this
+                $ruleset_name=undef if $ruleset_name ne $new_ruleset_name;
+            } else {
+                # if ruleset deleted, call from node.def will take care of this
+                $ruleset_name=undef;
+            }
+        }
     }
 
     if (defined $ruleset_name) {
