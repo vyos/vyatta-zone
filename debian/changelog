@@ -1,3 +1,9 @@
+vyatta-zone (0.10+napa1) unstable; urgency=low
+
+  * new branch
+
+ -- Deepti Kulkarni <deepti@vyatta.com>  Thu, 07 Jul 2011 20:51:53 -0700
+
 vyatta-zone (0.10) unstable; urgency=low
 
   * Bug 7154 Priority inversion error when deleting zone policy
