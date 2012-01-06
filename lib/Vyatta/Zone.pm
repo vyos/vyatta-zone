@@ -498,4 +498,31 @@ $zone_chain chain failed [$error]" if $error;
     return;
 }
 
+sub get_zone_hash {
+  #### Return a hash containing zone policy for use in operational/gui commands
+  my $zone_hash = ();
+  my @zones = get_all_zones("listOrigNodes");
+  for my $zone (@zones){
+    my @from_zones = get_from_zones("listOrigNodes", $zone);
+    for my $from_zone (@from_zones){
+      $zone_hash->{$zone}{'from'}->{$from_zone}{'firewall'}->{'ipv4'} =
+        get_firewall_ruleset("returnOrigValue", $zone, $from_zone, "name");
+      $zone_hash->{$zone}{'from'}->{$from_zone}{'firewall'}->{'ipv6'} =
+        get_firewall_ruleset("returnOrigValue", $zone, $from_zone, "ipv6-name");
+      $zone_hash->{$zone}{'from'}->{$from_zone}{'content-inspection'} =
+        is_ips_enabled("returnOrigValue", $zone, $from_zone, "enable");
+    }
+    if (is_local_zone("existsOrig", $zone)){
+      $zone_hash->{$zone}{'interfaces'} = ['local-zone'];
+    } else {
+      my @interfaces = get_zone_interfaces("returnOrigValues", $zone);
+      $zone_hash->{$zone}{'interfaces'} = [@interfaces];
+    }
+    my $config = new Vyatta::Config;
+    my $desc = $config->returnOrigValue("zone-policy zone $zone description");
+    $zone_hash->{$zone}{'description'} = $desc;
+  }
+  return $zone_hash;
+}
+
 1;
