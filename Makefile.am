@@ -6,6 +6,8 @@ bin_sudo_usersdir = $(bindir)/sudo-users
 curverdir = $(sysconfdir)/config-migrate/current
 curver_DATA = cfg-version/zone-policy@1
 
+bin_SCRIPTS = scripts/vyatta-show-zone.pl
+
 sbin_SCRIPTS  = scripts/vyatta-zone.pl
 sbin_SCRIPTS += scripts/vyatta-zone-ips.pl
 
@@ -17,3 +19,4 @@ cpiop = find  . ! -regex '\(.*~\|.*\.bak\|.*\.swp\|.*\#.*\#\)' -print0 | \
 install-exec-hook:
 	mkdir -p $(DESTDIR)$(cfgdir)
 	cd templates-cfg; $(cpiop) $(DESTDIR)$(cfgdir)
+	cd templates-op; $(cpiop) $(DESTDIR)$(opdir)

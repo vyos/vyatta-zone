@@ -1,0 +1,5 @@
+help: Show zone policy for a specific zone
+allowed: local -a vals
+         eval "vals=($(cli-shell-api listActiveNodes zone-policy zone))"
+         echo -n '<zone-name>' ${vals[@]}
+run: /opt/vyatta/bin/vyatta-show-zone.pl --zone=$4

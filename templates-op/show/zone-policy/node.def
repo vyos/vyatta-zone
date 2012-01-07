@@ -1,0 +1,2 @@
+help: Show summary of zone policy for a specific zone
+run: /opt/vyatta/bin/vyatta-show-zone.pl
