@@ -1,3 +1,11 @@
+vyatta-zone (0.12) unstable; urgency=low
+
+  * Add function to return zone policy information so that it may be
+    easily queried from the webgui and operational commands
+  * Bugfix: 7712 add zone-policy operational mode command
+
+ -- John Southworth <john.southworth@vyatta.com>  Fri, 06 Jan 2012 16:11:17 -0800
+
 vyatta-zone (0.11) unstable; urgency=low
 
   * new branch
