@@ -11,8 +11,7 @@ Architecture: all
 Depends:  perl (>= 5.8.8),
  vyatta-bash | bash (>= 3.1),
  vyatta-cfg,
- vyatta-cfg-firewall,
- vyatta-idp-snort
+ vyatta-cfg-firewall
 Replaces: vyatta-cfg,
  vyatta-cfg-system
 Description: The vyatta-zone package

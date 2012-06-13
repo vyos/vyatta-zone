@@ -8,23 +8,9 @@ create:
 	  exit 1
 	fi
 
-	# ips zone actions
-	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
-	  --action=add-localzone			\
-	  --zone-name="$VAR(../@)"; then
-	  exit 1
-	fi
-
 delete: 
 	# fw zone actions
 	if ! /opt/vyatta/sbin/vyatta-zone.pl		\
-	  --action=delete-localzone			\
-	  --zone-name="$VAR(../@)"; then
-	  exit 1
-	fi
-
-	# ips zone actions
-	if ! /opt/vyatta/sbin/vyatta-zone-ips.pl	\
 	  --action=delete-localzone			\
 	  --zone-name="$VAR(../@)"; then
 	  exit 1

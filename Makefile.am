@@ -9,7 +9,6 @@ curver_DATA = cfg-version/zone-policy@1
 bin_SCRIPTS = scripts/vyatta-show-zone.pl
 
 sbin_SCRIPTS  = scripts/vyatta-zone.pl
-sbin_SCRIPTS += scripts/vyatta-zone-ips.pl
 
 share_perl5_DATA  = lib/Vyatta/Zone.pm
 

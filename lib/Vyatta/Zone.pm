@@ -50,7 +50,6 @@ our @EXPORT_OK = qw(%cmd_hash %table_hash %policy_hash);
 
 my %get_zone_chain_hash = (
     get_zone_chain     => \&get_zone_chain,
-    get_ips_zone_chain => \&get_ips_zone_chain,
 );
 
 my $debug="false";
@@ -58,8 +57,7 @@ my $syslog="false";
 my $logger = 'sudo logger -t zone.pm -p local0.warn --';
 
 my %script_to_feature_hash = (
-        'vyatta-zone.pl'        => 'ZONE-FW',
-        'vyatta-zone-ips.pl'    => 'ZONE-IPS');
+        'vyatta-zone.pl'        => 'ZONE-FW');
 
 sub run_cmd {
     my $cmd = shift;
@@ -121,23 +119,10 @@ sub is_local_zone {
     return $config->$value_func("zone-policy zone $zone_name local-zone");
 }
 
-sub is_ips_enabled {
-    my ($value_func, $zone_name, $from_zone, $ips_type) = @_;
-    $ips_type =~ s/name/enable/;
-    my $config = new Vyatta::Config;
-    return $config->$value_func("zone-policy zone $zone_name from $from_zone
-	content-inspection $ips_type")
-}
-
 sub get_zone_default_policy {
     my ($value_func, $zone_name) = @_;
     my $config = new Vyatta::Config;
     return $config->$value_func("zone-policy zone $zone_name default-action");
-}
-
-sub get_ips_zone_default_policy {
-    my ($value_func, $zone_name) = @_;
-    return 'accept';
 }
 
 sub rule_exists {
@@ -156,12 +141,6 @@ sub rule_exists {
 sub get_zone_chain {
     my ($value_func, $zone, $localout) = @_;
     my $chain_prefix = "VZONE_$zone"; # should be same length as ips_zone_chain
-    return get_zone_chain_name($value_func, $zone, $localout, $chain_prefix);
-}
-
-sub get_ips_zone_chain {
-    my ($value_func, $zone, $localout) = @_;
-    my $chain_prefix = "VZIPS_$zone"; # should be same length as zone_chain
     return get_zone_chain_name($value_func, $zone, $localout, $chain_prefix);
 }
 
@@ -245,18 +224,6 @@ sub validity_checks {
                 $config->exists("firewall local ipv6-name")) {
               $returnstring =
                         "interface $interface has firewall rule-set " .
-                        "configured, cannot be defined under a zone";
-              return($returnstring, );
-            }
-            # make sure content-inspection is not applied to this interface
-            if ($config->exists("content-inspection in enable") ||
-                $config->exists("content-inspection out enable") ||
-                $config->exists("content-inspection local enable") ||
-                $config->exists("content-inspection in ipv6-enable") ||
-                $config->exists("content-inspection out ipv6-enable") ||
-                $config->exists("content-inspection local ipv6-enable")) {
-              $returnstring =
-                        "interface $interface has content-inspection " .
                         "configured, cannot be defined under a zone";
               return($returnstring, );
             }
@@ -509,8 +476,6 @@ sub get_zone_hash {
         get_firewall_ruleset("returnOrigValue", $zone, $from_zone, "name");
       $zone_hash->{$zone}{'from'}->{$from_zone}{'firewall'}->{'ipv6'} =
         get_firewall_ruleset("returnOrigValue", $zone, $from_zone, "ipv6-name");
-      $zone_hash->{$zone}{'from'}->{$from_zone}{'content-inspection'} =
-        is_ips_enabled("returnOrigValue", $zone, $from_zone, "enable");
     }
     if (is_local_zone("existsOrig", $zone)){
       $zone_hash->{$zone}{'interfaces'} = ['local-zone'];
