@@ -1,3 +1,9 @@
+vyatta-zone (0.14) unstable; urgency=low
+
+  * Remove IPS from zone
+
+ -- John Southworth <john.southworth@vyatta.com>  Wed, 20 Jun 2012 10:51:04 -0700
+
 vyatta-zone (0.13) unstable; urgency=low
 
   * new branch
