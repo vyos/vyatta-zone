@@ -24,3 +24,5 @@ delete:
 	  --zone-name="$VAR(@)"; then
 	  exit 1
 	fi
+
+end: ${vyatta_sbindir}/vyatta-firewall-trap.pl --level="zone-policy zone $VAR(@)"
