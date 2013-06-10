@@ -1,3 +1,9 @@
+vyatta-zone (0.15+daisy2) unstable; urgency=low
+
+  * Enable generation of SNMP traps on zone-policy changes
+
+ -- James Davidson <james.davidson@vyatta.com>  Mon, 10 Jun 2013 08:49:04 -0700
+
 vyatta-zone (0.15+daisy1) unstable; urgency=low
 
   * create daisy branch
