@@ -1,3 +1,9 @@
+vyatta-zone (0.15+hydrogen1) unstable; urgency=low
+
+  * New branch
+
+ -- Daniil Baturin <daniil@baturin.org>  Sun, 17 Nov 2013 01:30:43 +0100
+
 vyatta-zone (0.15+daisy2) unstable; urgency=low
 
   * Enable generation of SNMP traps on zone-policy changes
