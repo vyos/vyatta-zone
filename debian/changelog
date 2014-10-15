@@ -1,3 +1,9 @@
+vyatta-zone (0.15+vyos1+helium2) unstable; urgency=low
+
+  * Update maintainer address.
+
+ -- Daniil Baturin <daniil@baturin.org>  Wed, 15 Oct 2014 14:57:28 +0200
+
 vyatta-zone (0.15+vyos1+helium1) unstable; urgency=low
 
   * New branch
