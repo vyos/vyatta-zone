@@ -1,3 +1,9 @@
+vyatta-zone (0.15+vyos2+lithium1) unstable; urgency=low
+
+  * New branch
+
+ -- Alex Harpin <development@landsofshadow.co.uk>  Tue, 02 Dec 2014 08:37:37 +0000
+ 
 vyatta-zone (0.15+vyos1+helium2) unstable; urgency=low
 
   * Update maintainer address.
