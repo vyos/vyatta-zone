@@ -1,3 +1,12 @@
+vyatta-zone (0.15+vyos2+current1) unstable; urgency=medium
+
+  [ Thomas Jepp ]
+  * Fix build depends.
+
+  [ Kim Hagen ]
+
+ -- Kim Hagen <kim.sidney@gmail.com>  Sun, 24 Jan 2016 15:31:38 -0500
+
 vyatta-zone (0.15+vyos2+lithium3) unstable; urgency=low
 
   * Fvyatta-zone: update dh_gencontrol with new development build flag
