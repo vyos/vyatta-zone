@@ -1,3 +1,9 @@
+vyatta-zone (1.2.0-1) stable; urgency=medium
+
+  * New branch.
+
+ -- Daniil Baturin <daniil@baturin.org>  Fri, 28 Sep 2018 22:28:14 +0200
+
 vyatta-zone (0.15+vyos2+current1) unstable; urgency=medium
 
   [ Thomas Jepp ]
