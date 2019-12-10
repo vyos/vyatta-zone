@@ -1,3 +1,9 @@
+vyatta-zone (1.2.4) unstable; urgency=low
+
+  * New release.
+
+ -- VyOS maintainers <maintainers@vyos.io>  Tue, 10 Dec 2019 23:40:07 +0200
+
 vyatta-zone (1.2.0-1) stable; urgency=medium
 
   * New branch.
@@ -157,4 +163,3 @@ vyatta-zone (0.1) unstable; urgency=low
   * Initial Release.
 
  -- Mohit Mehta <mohit@vyatta.com>  Thu, 7 Oct 2010 12:31:53 -0700
-
